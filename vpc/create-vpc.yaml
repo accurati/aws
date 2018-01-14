@@ -1,0 +1,649 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Accurati.io - VPC Provisioning script
+Parameters:
+  WhoAmI:
+    ConstraintDescription: provide your email address
+    AllowedPattern: ^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$
+    Type: String
+  KeyName:
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instances
+    Type: 'AWS::EC2::KeyPair::KeyName'
+  VpcCidrBlock:
+    ConstraintDescription: must be a valie CIDR block
+    Description: Select the CIDR block x.y.0.0/16
+    Type: String
+    AllowedValues: # chante it to your needs
+      - "10.1"
+      - "10.2"
+      - "10.3"
+      - "10.4"
+
+Mappings:
+  Constants:
+    AMI:
+      # Add AMI for your region
+      defaultRegion: "ami-b09e1ac9" # change it to the latest Amazon Linux AMI
+  DefaultTags:
+    Project:
+      Key: "Project"
+      Value: "5112"
+    CreatedBy:
+      Key: "CreatedBy"
+      Value: WhoAmI
+Resources:
+  VPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '0.0/16']]
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: "default"
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'VPC']]
+
+  # DMZ subnet
+  DMZSubnetAvA:
+    DependsOn: VPC
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Join ['', [ !Ref "AWS::Region", 'a']]
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '10.0/24']]
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'DMZ','a']]
+      VpcId:
+        Ref: VPC
+  DMZSubnetAvB:
+    DependsOn: VPC
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Join ['', [ !Ref "AWS::Region", 'b']]
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '20.0/24']]
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'DMZ','b']]
+      VpcId:
+        Ref: VPC
+  DMZSubnetAvC:
+    DependsOn: VPC
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Join ['', [ !Ref "AWS::Region", 'c']]
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '30.0/24']]
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'DMZ','c']]
+      VpcId:
+        Ref: VPC
+
+  # FrontEnd subnet
+  FrontEndSubnetAvA:
+    DependsOn: VPC
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Join ['', [ !Ref "AWS::Region", 'a']]
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '11.0/24']]
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'FE','a']]
+      VpcId:
+        Ref: VPC
+  FrontEndSubnetAvB:
+    DependsOn: VPC
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Join ['', [ !Ref "AWS::Region", 'b']]
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '21.0/24']]
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'FE','b']]
+      VpcId:
+        Ref: VPC
+  FrontEndSubnetAvC:
+    DependsOn: VPC
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Join ['', [ !Ref "AWS::Region", 'c']]
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '31.0/24']]
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'FE','c']]
+      VpcId:
+        Ref: VPC
+
+  # Backend subnet
+  BackEndSubnetAvA:
+    DependsOn: VPC
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Join ['', [ !Ref "AWS::Region", 'a']]
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '12.0/24']]
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'BE','a']]
+      VpcId:
+        Ref: VPC
+  BackEndSubnetAvB:
+    DependsOn: VPC
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Join ['', [ !Ref "AWS::Region", 'b']]
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '22.0/24']]
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'BE','b']]
+      VpcId:
+        Ref: VPC
+  BackEndSubnetAvC:
+    DependsOn: VPC
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Join ['', [ !Ref "AWS::Region", 'c']]
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '32.0/24']]
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'BE','c']]
+      VpcId:
+        Ref: VPC
+
+  # DB subnet
+  DBSubnetAvA:
+    DependsOn: VPC
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Join ['', [ !Ref "AWS::Region", 'a']]
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '13.0/24']]
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'DB','a']]
+      VpcId:
+        Ref: VPC
+  DBSubnetAvB:
+    DependsOn: VPC
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Join ['', [ !Ref "AWS::Region", 'b']]
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '23.0/24']]
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'DB','b']]
+      VpcId:
+        Ref: VPC
+  DBSubnetAvC:
+    DependsOn: VPC
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Join ['', [ !Ref "AWS::Region", 'c']]
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '33.0/24']]
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'DB','c']]
+      VpcId:
+        Ref: VPC
+
+
+  # Routing tables
+  DMZRouting:
+    DependsOn: VPC
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'DMZ']]
+  SVCRouting:
+    DependsOn: VPC
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'SVC']]
+  DBRouting:
+    DependsOn: VPC
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'DB']]
+
+
+  # Access Control List tables
+  DMZAccessAcl:
+    Type: "AWS::EC2::NetworkAcl"
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ 'ACL-DMZ', !Ref "AWS::StackName"]]
+      VpcId: !Ref VPC
+
+  FrontEndAccessAcl:
+    Type: "AWS::EC2::NetworkAcl"
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ 'ACL-FE', !Ref "AWS::StackName"]]
+      VpcId: !Ref VPC
+  BackEndAccessAcl:
+    Type: "AWS::EC2::NetworkAcl"
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ 'ACL-BE', !Ref "AWS::StackName"]]
+      VpcId: !Ref VPC
+  DBAccessAcl:
+    Type: "AWS::EC2::NetworkAcl"
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ 'ACL-DB', !Ref "AWS::StackName"]]
+      VpcId: !Ref VPC
+
+
+# Egress/Ingress traffic in the DMZ subnet
+  AllowAllEgressTraffic:
+    DependsOn: DMZAccessAcl
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref DMZAccessAcl
+      RuleNumber: 100
+      Protocol: -1
+      RuleAction: allow
+      Egress: true
+      CidrBlock: 0.0.0.0/0
+
+  PublicSshAclEntry:
+    DependsOn: DMZAccessAcl
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref DMZAccessAcl
+      RuleNumber: 100
+      Protocol: 6
+      RuleAction: allow
+      Egress: false
+      CidrBlock: 0.0.0.0/0
+      PortRange:
+        From: '22'
+        To: '22'
+
+  InternalTrafficDMZAclEntry:
+    DependsOn: DMZAccessAcl
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref DMZAccessAcl
+      RuleNumber: 200
+      Protocol: -1
+      RuleAction: allow
+      Egress: false
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '0.0/16']]
+
+  PublicEphemeralPortsAclEntry:
+    DependsOn: DMZAccessAcl
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref DMZAccessAcl
+      RuleNumber: 300
+      Protocol: 6
+      RuleAction: allow
+      Egress: false
+      CidrBlock: 0.0.0.0/0
+      PortRange:
+        From: '49152'
+        To: '65535'
+
+# Internet Gateway
+  InternetGateway:
+    DependsOn: VPC
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'IGW']]
+
+  AttachInternetGateway:
+    DependsOn: VPC
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+
+# NAT Gateway
+  NatElasticIp:
+    Type: "AWS::EC2::EIP"
+    Properties:
+      Domain: "vpc"
+
+  NatGateway:
+    DependsOn:
+      - DMZSubnetAvA
+      - NatElasticIp
+    DependsOn: AttachInternetGateway
+    Type: "AWS::EC2::NatGateway"
+    Properties:
+      AllocationId: !GetAtt NatElasticIp.AllocationId
+      SubnetId: !Ref DMZSubnetAvA
+      Tags:
+        - Key: "Name"
+          Value: !Join ['-', [ !Ref "AWS::StackName", 'NatGW']]
+
+# Internet Route
+  AddInternetRoute:
+    Type: "AWS::EC2::Route"
+    Properties:
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref DMZRouting
+  AddNatRoute:
+    Type: "AWS::EC2::Route"
+    Properties:
+      DestinationCidrBlock: "0.0.0.0/0"
+      NatGatewayId: !Ref NatGateway
+      RouteTableId: !Ref SVCRouting
+
+# DMZ Routing Entries
+  AddDmzAToPublicRT:
+    DependsOn:
+      - DMZSubnetAvA
+      - DMZRouting
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref DMZSubnetAvA
+      RouteTableId: !Ref DMZRouting
+  AddDmzBToPublicRT:
+    DependsOn:
+      - DMZSubnetAvB
+      - DMZRouting
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref DMZSubnetAvB
+      RouteTableId: !Ref DMZRouting
+  AddDmzCToPublicRT:
+    DependsOn:
+      - DMZSubnetAvC
+      - DMZRouting
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref DMZSubnetAvC
+      RouteTableId: !Ref DMZRouting
+
+# Service Routing Entries
+  AddFrontEndSubnetAvAToSVCRouting:
+    DependsOn:
+      - FrontEndSubnetAvA
+      - SVCRouting
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref FrontEndSubnetAvA
+      RouteTableId: !Ref SVCRouting
+  AddFrontEndSubnetAvBToSVCRouting:
+    DependsOn:
+      - FrontEndSubnetAvB
+      - SVCRouting
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref FrontEndSubnetAvB
+      RouteTableId: !Ref SVCRouting
+  AddFrontEndSubnetAvCToSVCRouting:
+    DependsOn:
+      - FrontEndSubnetAvC
+      - SVCRouting
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref FrontEndSubnetAvC
+      RouteTableId: !Ref SVCRouting
+
+  AddBackEndSubnetAvAToSVCRouting:
+    DependsOn:
+      - BackEndSubnetAvA
+      - SVCRouting
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref BackEndSubnetAvA
+      RouteTableId: !Ref SVCRouting
+
+  AddBackEndSubnetAvBToSVCRouting:
+    DependsOn:
+      - BackEndSubnetAvB
+      - SVCRouting
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref BackEndSubnetAvB
+      RouteTableId: !Ref SVCRouting
+
+  AddBackEndSubnetAvCToSVCRouting:
+    DependsOn:
+      - BackEndSubnetAvC
+      - SVCRouting
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref BackEndSubnetAvC
+      RouteTableId: !Ref SVCRouting
+
+# Access Control List
+  AllowAllTraficToFrontEnd:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref FrontEndAccessAcl
+      RuleNumber: 100
+      Protocol: -1
+      RuleAction: allow
+      Egress: false
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '0.0/16']]
+
+  AllowAllTraficToBackEnd:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref BackEndAccessAcl
+      RuleNumber: 100
+      Protocol: -1
+      RuleAction: allow
+      Egress: false
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '0.0/16']]
+
+  AllowAllTraficToDB:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref DBAccessAcl
+      RuleNumber: 100
+      Protocol: -1
+      RuleAction: allow
+      Egress: false
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '0.0/16']]
+
+
+  AllowAllTraficFromFrontEnd:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref FrontEndAccessAcl
+      RuleNumber: 100
+      Protocol: -1
+      RuleAction: allow
+      Egress: true
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '0.0/16']]
+
+  AllowAllTraficFromBackEnd:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref BackEndAccessAcl
+      RuleNumber: 100
+      Protocol: -1
+      RuleAction: allow
+      Egress: true
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '0.0/16']]
+
+  AllowAllTraficFromDB:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref DBAccessAcl
+      RuleNumber: 100
+      Protocol: -1
+      RuleAction: allow
+      Egress: true
+      CidrBlock: !Join [ '.', [!Ref VpcCidrBlock, '0.0/16']]
+
+
+  AdDMZSubnetAvAToAcl:
+    DependsOn:
+      - DMZSubnetAvA
+      - DMZAccessAcl
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref DMZSubnetAvA
+      NetworkAclId: !Ref DMZAccessAcl
+
+  AdDMZSubnetAvBToAcl:
+    DependsOn:
+      - DMZSubnetAvB
+      - DMZAccessAcl
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref DMZSubnetAvB
+      NetworkAclId: !Ref DMZAccessAcl
+
+  AdDMZSubnetAvCToAcl:
+    DependsOn:
+      - DMZSubnetAvC
+      - DMZAccessAcl
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref DMZSubnetAvC
+      NetworkAclId: !Ref DMZAccessAcl
+
+
+  AddDBSubnetAvASubnetToAcl:
+    DependsOn:
+      - DBSubnetAvA
+      - DBAccessAcl
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref DBSubnetAvA
+      NetworkAclId: !Ref DBAccessAcl
+
+  AddDBSubnetAvBSubnetToAcl:
+    DependsOn:
+      - DBSubnetAvB
+      - DBAccessAcl
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref DBSubnetAvB
+      NetworkAclId: !Ref DBAccessAcl
+
+  AddDBSubnetAvCSubnetToAcl:
+    DependsOn:
+      - DBSubnetAvC
+      - DBAccessAcl
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref DBSubnetAvC
+      NetworkAclId: !Ref DBAccessAcl
+
+  AddFrontEndSubnetAvASubnetToAcl:
+    DependsOn:
+      - FrontEndSubnetAvA
+      - FrontEndAccessAcl
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref FrontEndSubnetAvA
+      NetworkAclId: !Ref FrontEndAccessAcl
+
+  AddFrontEndSubnetAvBSubnetToAcl:
+    DependsOn:
+      - FrontEndSubnetAvB
+      - FrontEndAccessAcl
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref FrontEndSubnetAvB
+      NetworkAclId: !Ref FrontEndAccessAcl
+
+  AddFrontEndSubnetAvCSubnetToAcl:
+    DependsOn:
+      - FrontEndSubnetAvC
+      - FrontEndAccessAcl
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref FrontEndSubnetAvC
+      NetworkAclId: !Ref FrontEndAccessAcl
+
+  AddBackEndSubnetAvASubnetToAcl:
+    DependsOn:
+      - BackEndSubnetAvA
+      - BackEndAccessAcl
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref BackEndSubnetAvA
+      NetworkAclId: !Ref BackEndAccessAcl
+
+  AddBackEndSubnetAvBSubnetToAcl:
+    DependsOn:
+      - BackEndSubnetAvB
+      - BackEndAccessAcl
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref BackEndSubnetAvB
+      NetworkAclId: !Ref BackEndAccessAcl
+
+  AddBackEndSubnetAvCSubnetToAcl:
+    DependsOn:
+      - BackEndSubnetAvC
+      - BackEndAccessAcl
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref BackEndSubnetAvC
+      NetworkAclId: !Ref BackEndAccessAcl
+
+  SSHSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Allow incoming ssh traffic
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          FromPort: '22'
+          IpProtocol: tcp
+          ToPort: '22'
+
+  DMZHttpSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Allow incoming ssh traffic
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          FromPort: '80'
+          IpProtocol: tcp
+          ToPort: '80'
+        - CidrIp: "0.0.0.0/0"
+          FromPort: '443'
+          IpProtocol: tcp
+          ToPort: '443'
+
+#
+  BastionInstance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: !FindInMap ["Constants", "AMI", "defaultRegion"]
+      InstanceType: "t2.micro"
+      KeyName: !Ref KeyName
+
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          yum update -y
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          SubnetId: !Ref DMZSubnetAvA
+          GroupSet:
+            - !Ref SSHSecurityGroup
+            - !GetAtt VPC.DefaultSecurityGroup
+#
+Outputs:
+  BastionAccessIp:
+    Description: Bastion SSH IP address
+    Value: !GetAtt BastionInstance.PublicIp
+  MyStacksRegion:
+    Value: !Ref "AWS::Region"
